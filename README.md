@@ -21,7 +21,7 @@ uv sync
 cp .env.example .env
 # Add your LiveKit credentials:
 # LIVEKIT_API_KEY=your_key
-# LIVEKIT_API_SECRET=your_secret
+# LIVEKIT_API_SECRET=your_secret        
 # LIVEKIT_URL=wss://your-project.livekit.cloud
 ```
 
@@ -41,6 +41,18 @@ uv run python -m src.services.agent start
 - **Admin Panel**: http://127.0.0.1:8000/static/admin_panel.html
 - **Call Simulator**: http://127.0.0.1:8000/static/phone_call_sim.html
 - **API Docs**: http://127.0.0.1:8000/docs
+
+## Testing
+
+### Manual Testing Flow
+1. Start both services
+2. Open call simulator
+3. Test scenarios:
+   - Known question: "What are your hours?" (KB hit)
+   - Unknown: "Do you do keratin treatments?" (escalate)
+   - Urgent: "I need an appointment today!" (high priority)
+4. Resolve in admin panel
+5. Repeat same question (should use KB now)
 
 ## Architecture
 
@@ -85,12 +97,12 @@ src/
 - Quality metrics (`confidence_score`, feedback counters)
 
 ### 2. Scalability Path
-**Current (Demo):**
+**Current (for demo purposes):**
 - SQLite - simple, no setup
 - Synchronous operations
 - In-memory caching
 
-**Production (1k+ requests/day):**
+**Production irl:**
 - PostgreSQL (Supabase/RDS)
 - Redis for hot KB entries
 - Message queue (SQS) for async follow-ups
@@ -98,11 +110,10 @@ src/
 - Connection pooling
 
 ### 3. Modularity
-**Easy extensions:**
-- Phase 2: Live supervisor transfer (add Twilio conference)
-- Phase 3: Multi-channel (SMS, web chat)
-- Phase 4: Analytics dashboard
-- Services are decoupled via dependency injection
+**Easy extension to Phase 2: Live supervisor transfer (add Twilio conference)**
+
+We can update SalonAssistant.escalate_to_supervisor func to check for any live supervisors and transfer the call. If no live supervisors available, current functionality remains.
+
 
 ### 4. Knowledge Base Strategy
 **V1 (Current):**
@@ -138,18 +149,6 @@ Located in `src/services/agent.py`:
 2. **Conversation memory** - Track multi-turn context
 3. **Sentiment detection** - Escalate frustrated callers faster
 4. **A/B test prompts** - Track resolution rates by variant
-
-## Testing
-
-### Manual Testing Flow
-1. Start both services
-2. Open call simulator
-3. Test scenarios:
-   - Known question: "What are your hours?" (KB hit)
-   - Unknown: "Do you do keratin treatments?" (escalate)
-   - Urgent: "I need an appointment today!" (high priority)
-4. Resolve in admin panel
-5. Repeat same question (should use KB now)
 
 ## Future Enhancements
 

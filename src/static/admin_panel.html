@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Salon AI Supervisor Panel</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f9fafb;
+            color: #111827;
+        }
+
+        .header {
+            background: white;
+            border-bottom: 1px solid #e5e7eb;
+            padding: 1rem 1.5rem;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .header p {
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+
+        .container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 1.5rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            border: 1px solid #e5e7eb;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .stat-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        .stat-icon.yellow { background: #eab308; }
+        .stat-icon.green { background: #22c55e; }
+        .stat-icon.red { background: #ef4444; }
+        .stat-icon.blue { background: #3b82f6; }
+
+        .stat-content {
+            flex: 1;
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .panel {
+            background: white;
+            border-radius: 0.5rem;
+            border: 1px solid #e5e7eb;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+
+        .tabs {
+            display: flex;
+            gap: 1rem;
+            padding: 0 1rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .tab {
+            padding: 0.75rem 1rem;
+            border: none;
+            background: none;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            font-weight: 500;
+            font-size: 0.875rem;
+            color: #6b7280;
+            transition: all 0.2s;
+        }
+
+        .tab:hover {
+            color: #111827;
+        }
+
+        .tab.active {
+            color: #3b82f6;
+            border-bottom-color: #3b82f6;
+        }
+
+        .tab-content {
+            padding: 1.5rem;
+        }
+
+        .tab-pane {
+            display: none;
+        }
+
+        .tab-pane.active {
+            display: block;
+        }
+
+        .request-card {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .request-card:hover {
+            border-color: #3b82f6;
+        }
+
+        .request-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 0.75rem;
+        }
+
+        .request-id {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #6b7280;
+        }
+
+        .request-time {
+            font-size: 0.75rem;
+            color: #9ca3af;
+        }
+
+        .request-question {
+            margin-bottom: 0.75rem;
+        }
+
+        .request-question-label {
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .request-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.75rem;
+            color: #6b7280;
+        }
+
+        .age-badge {
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .age-badge.green { background: #dcfce7; color: #166534; }
+        .age-badge.yellow { background: #fef3c7; color: #854d0e; }
+        .age-badge.red { background: #fee2e2; color: #991b1b; }
+
+        .status-badge {
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .status-badge.resolved { background: #dcfce7; color: #166534; }
+        .status-badge.pending { background: #fef3c7; color: #854d0e; }
+        .status-badge.unresolved { background: #fee2e2; color: #991b1b; }
+
+        .kb-entry {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .kb-question {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .kb-answer {
+            font-size: 0.875rem;
+            color: #374151;
+            margin-bottom: 0.5rem;
+        }
+
+        .kb-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            color: #6b7280;
+        }
+
+        .test-section {
+            margin-bottom: 1rem;
+        }
+
+        .test-info {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            font-size: 0.875rem;
+            color: #1e40af;
+        }
+
+        .test-input-group {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .test-input {
+            flex: 1;
+            padding: 0.5rem 1rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .test-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .btn {
+            padding: 0.5rem 1.5rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.875rem;
+        }
+
+        .btn-primary {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2563eb;
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #374151;
+            border: 1px solid #d1d5db;
+        }
+
+        .btn-secondary:hover {
+            background: #f9fafb;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            z-index: 1000;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 0.5rem;
+            max-width: 600px;
+            width: 100%;
+            padding: 1.5rem;
+        }
+
+        .modal-header {
+            font-size: 1.25rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+        }
+
+        .modal-body {
+            background: #f9fafb;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .modal-textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 0.75rem 1rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            font-family: inherit;
+            font-size: 0.875rem;
+            margin-bottom: 1rem;
+            resize: vertical;
+        }
+
+        .modal-textarea:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .modal-footer {
+            display: flex;
+            gap: 0.75rem;
+            justify-content: flex-end;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: #6b7280;
+        }
+
+        .empty-icon {
+            font-size: 3rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .history-card {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 0.5rem;
+        }
+
+        .history-question {
+            font-weight: 500;
+            flex: 1;
+        }
+
+        .history-response {
+            font-size: 0.875rem;
+            color: #6b7280;
+            margin-top: 0.5rem;
+        }
+
+        .history-meta {
+            font-size: 0.75rem;
+            color: #9ca3af;
+            margin-top: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Salon AI Supervisor Panel</h1>
+        <p>Manage help requests and knowledge base</p>
+    </div>
+
+    <div class="container">
+        <!-- Stats -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon yellow">⏱</div>
+                <div class="stat-content">
+                    <div class="stat-label">Pending</div>
+                    <div class="stat-value" id="stat-pending">0</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon green">✓</div>
+                <div class="stat-content">
+                    <div class="stat-label">Resolved</div>
+                    <div class="stat-value" id="stat-resolved">0</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon red">!</div>
+                <div class="stat-content">
+                    <div class="stat-label">Unresolved</div>
+                    <div class="stat-value" id="stat-unresolved">0</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon blue">📚</div>
+                <div class="stat-content">
+                    <div class="stat-label">KB Entries</div>
+                    <div class="stat-value" id="stat-kb">0</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs Panel -->
+        <div class="panel">
+            <div class="tabs">
+                <button class="tab active" data-tab="pending">Pending</button>
+                <button class="tab" data-tab="history">History</button>
+                <button class="tab" data-tab="knowledge">Knowledge</button>
+                <button class="tab" data-tab="test">Test</button>
+            </div>
+
+            <div class="tab-content">
+                <!-- Pending Tab -->
+                <div class="tab-pane active" id="pending-tab">
+                    <h2 style="font-size: 1.125rem; font-weight: 600; margin-bottom: 1rem;">Pending Help Requests</h2>
+                    <div id="pending-list"></div>
+                </div>
+
+                <!-- History Tab -->
+                <div class="tab-pane" id="history-tab">
+                    <h2 style="font-size: 1.125rem; font-weight: 600; margin-bottom: 1rem;">All Requests</h2>
+                    <div id="history-list"></div>
+                </div>
+
+                <!-- Knowledge Tab -->
+                <div class="tab-pane" id="knowledge-tab">
+                    <h2 style="font-size: 1.125rem; font-weight: 600; margin-bottom: 1rem;">Learned Answers</h2>
+                    <div id="knowledge-list"></div>
+                </div>
+
+                <!-- Test Tab -->
+                <div class="tab-pane" id="test-tab">
+                    <h2 style="font-size: 1.125rem; font-weight: 600; margin-bottom: 1rem;">Test Agent</h2>
+                    <div class="test-info">
+                        Simulate a customer call to test the agent's responses and escalation logic.
+                    </div>
+                    <div class="test-input-group">
+                        <input type="text" id="test-input" class="test-input" placeholder="Type a customer question..." />
+                        <button class="btn btn-primary" onclick="handleTestCall()">Test</button>
+                    </div>
+                    <div style="font-size: 0.875rem; color: #6b7280;">
+                        <p style="font-weight: 500; margin-bottom: 0.5rem;">Try these examples:</p>
+                        <ul style="list-style: disc; margin-left: 1.5rem; line-height: 1.6;">
+                            <li>"What are your hours?"</li>
+                            <li>"How much is a haircut?"</li>
+                            <li>"Do you do keratin treatments?"</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal" id="response-modal">
+        <div class="modal-content">
+            <div class="modal-header">Respond to Request <span id="modal-request-id"></span></div>
+            <div class="modal-body">
+                <div style="font-size: 0.875rem; font-weight: 500; color: #6b7280; margin-bottom: 0.25rem;">Customer Question:</div>
+                <div id="modal-question"></div>
+                <div id="modal-reason" style="margin-top: 0.75rem; display: none;">
+                    <div style="font-size: 0.875rem; font-weight: 500; color: #6b7280; margin-bottom: 0.25rem;">Why escalated:</div>
+                    <div style="font-size: 0.875rem; color: #374151;" id="modal-reason-text"></div>
+                </div>
+            </div>
+            <textarea id="response-textarea" class="modal-textarea" placeholder="Type your answer here..."></textarea>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="handleResolve()">Send & Resolve</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000/api';
+        let currentRequest = null;
+        let allData = {
+            pending: [],
+            all: [],
+            kb: [],
+            stats: {}
+        };
+
+        // Tab switching
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                const tabName = tab.dataset.tab;
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById(tabName + '-tab').classList.add('active');
+            });
+        });
+
+        // Test input enter key
+        document.getElementById('test-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') handleTestCall();
+        });
+
+        // Fetch all data
+        async function fetchAllData() {
+            try {
+                const [pending, all, kb, stats] = await Promise.all([
+                    fetch(`${API_BASE}/help-requests/pending`).then(r => r.json()),
+                    fetch(`${API_BASE}/help-requests/all`).then(r => r.json()),
+                    fetch(`${API_BASE}/knowledge-base`).then(r => r.json()),
+                    fetch(`${API_BASE}/help-requests/stats`).then(r => r.json())
+                ]);
+
+                allData = {
+                    pending: pending.requests || [],
+                    all: all.requests || [],
+                    kb: kb.answers || [],
+                    stats: stats.stats || {}
+                };
+
+                updateUI();
+            } catch (error) {
+                console.error('Error fetching data:', error);
+            }
+        }
+
+        // Update UI
+        function updateUI() {
+            // Update stats
+            document.getElementById('stat-pending').textContent = allData.stats.pending || 0;
+            document.getElementById('stat-resolved').textContent = allData.stats.resolved || 0;
+            document.getElementById('stat-unresolved').textContent = allData.stats.unresolved || 0;
+            document.getElementById('stat-kb').textContent = allData.kb.length;
+
+            // Update pending list
+            const pendingList = document.getElementById('pending-list');
+            if (allData.pending.length === 0) {
+                pendingList.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">✓</div>
+                        <p>No pending requests. Great job!</p>
+                    </div>
+                `;
+            } else {
+                pendingList.innerHTML = allData.pending.map(req => `
+                    <div class="request-card" onclick='openModal(${JSON.stringify(req)})'>
+                        <div class="request-header">
+                            <span class="request-id">Request #${req.id}</span>
+                            <span class="request-time">${new Date(req.created_at).toLocaleString()}</span>
+                        </div>
+                        <div class="request-question">
+                            <div class="request-question-label">Question:</div>
+                            <div>${req.question}</div>
+                        </div>
+                        ${req.escalation_reason ? `<div style="font-size: 0.75rem; color: #6b7280; margin-bottom: 0.5rem;">Reason: ${req.escalation_reason}</div>` : ''}
+                        <div class="request-footer">
+                            <span>Caller: ${req.caller_id}</span>
+                            ${req.age_hours !== undefined ? `
+                                <span class="age-badge ${req.age_hours < 1 ? 'green' : req.age_hours < 6 ? 'yellow' : 'red'}">
+                                    ${req.age_hours.toFixed(1)}h old
+                                </span>
+                            ` : ''}
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            // Update history list
+            const historyList = document.getElementById('history-list');
+            historyList.innerHTML = allData.all.map(req => `
+                <div class="history-card">
+                    <div class="history-header">
+                        <span class="history-question">#${req.id}: ${req.question}</span>
+                        <span class="status-badge ${req.status}">${req.status}</span>
+                    </div>
+                    ${req.supervisor_response ? `<div class="history-response"><strong>Response:</strong> ${req.supervisor_response}</div>` : ''}
+                    <div class="history-meta">
+                        ${new Date(req.created_at).toLocaleString()}
+                        ${req.followed_up ? ' • Customer notified ✓' : ''}
+                    </div>
+                </div>
+            `).join('');
+
+            // Update knowledge base
+            const kbList = document.getElementById('knowledge-list');
+            kbList.innerHTML = allData.kb.map(entry => `
+                <div class="kb-entry">
+                    <div class="kb-question">${entry.question}</div>
+                    <div class="kb-answer">${entry.answer}</div>
+                    <div class="kb-meta">
+                        <span>Used ${entry.usage_count} times • Source: ${entry.source}</span>
+                        <span>${new Date(entry.created_at).toLocaleDateString()}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Modal functions
+        function openModal(request) {
+            currentRequest = request;
+            document.getElementById('modal-request-id').textContent = '#' + request.id;
+            document.getElementById('modal-question').textContent = request.question;
+            
+            if (request.escalation_reason) {
+                document.getElementById('modal-reason').style.display = 'block';
+                document.getElementById('modal-reason-text').textContent = request.escalation_reason;
+            } else {
+                document.getElementById('modal-reason').style.display = 'none';
+            }
+            
+            document.getElementById('response-textarea').value = '';
+            document.getElementById('response-modal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('response-modal').classList.remove('active');
+            currentRequest = null;
+        }
+
+        // Handle resolve
+        async function handleResolve() {
+            const response = document.getElementById('response-textarea').value.trim();
+            if (!response) {
+                alert('Please enter a response');
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_BASE}/help-requests/${currentRequest.id}/resolve`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        supervisor_response: response,
+                        add_to_kb: true
+                    })
+                });
+
+                const data = await res.json();
+                
+                if (data.success) {
+                    alert('✅ Request resolved! Customer has been notified.');
+                    closeModal();
+                    await fetchAllData();
+                }
+            } catch (error) {
+                alert('Error resolving request: ' + error.message);
+            }
+        }
+
+        // Handle test call
+        async function handleTestCall() {
+            const message = document.getElementById('test-input').value.trim();
+            if (!message) return;
+
+            try {
+                const res = await fetch(`${API_BASE}/test-call`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_message: message,
+                        caller_id: 'test_user_' + Date.now()
+                    })
+                });
+
+                const data = await res.json();
+                
+                if (data.success) {
+                    alert(`Agent Response:\n\n${data.result.response}\n\nStatus: ${data.result.status}`);
+                    document.getElementById('test-input').value = '';
+                    await fetchAllData();
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+
+        // Initial load and polling
+        fetchAllData();
+        setInterval(fetchAllData, 5000);
+    </script>
+</body>
+</html>

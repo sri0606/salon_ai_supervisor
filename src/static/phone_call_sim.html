@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Salon Phone Call Simulator</title>
+<script src="https://cdn.jsdelivr.net/npm/livekit-client/dist/livekit-client.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .phone-container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 500px;
+            width: 100%;
+        }
+        
+        .phone-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .phone-header h1 {
+            font-size: 28px;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .phone-header p {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .status {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: 500;
+        }
+        
+        .status.disconnected {
+            color: #666;
+        }
+        
+        .status.connecting {
+            color: #f59e0b;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+        
+        .status.connected {
+            color: #10b981;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .input-group {
+            margin-bottom: 20px;
+        }
+        
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+            font-size: 14px;
+        }
+        
+        .input-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        
+        .input-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        button {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .btn-call {
+            background: #10b981;
+            color: white;
+        }
+        
+        .btn-call:hover:not(:disabled) {
+            background: #059669;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+        }
+        
+        .btn-hangup {
+            background: #ef4444;
+            color: white;
+        }
+        
+        .btn-hangup:hover:not(:disabled) {
+            background: #dc2626;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+        }
+        
+        .audio-controls {
+            background: #f9fafb;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .audio-controls label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .audio-controls input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+        
+        .transcript {
+            background: #f9fafb;
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            padding: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        
+        .transcript-item {
+            margin-bottom: 12px;
+            padding: 8px 12px;
+            border-radius: 6px;
+        }
+        
+        .transcript-item.user {
+            background: #dbeafe;
+            text-align: right;
+        }
+        
+        .transcript-item.assistant {
+            background: #f3f4f6;
+        }
+        
+        .transcript-item strong {
+            display: block;
+            margin-bottom: 4px;
+            font-size: 12px;
+            opacity: 0.7;
+        }
+        
+        .info-box {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+            font-size: 13px;
+            color: #1e40af;
+        }
+        
+        .info-box strong {
+            display: block;
+            margin-bottom: 8px;
+        }
+        
+        .info-box ul {
+            margin-left: 20px;
+        }
+        
+        .info-box li {
+            margin-bottom: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="phone-container">
+        <div class="phone-header">
+            <h1>📞 Salon Phone Simulator</h1>
+            <p>Test your AI receptionist</p>
+        </div>
+        
+        <div id="status" class="status disconnected">
+            Disconnected
+        </div>
+        
+        <div class="input-group">
+            <label for="roomName">Room Name (optional)</label>
+            <input type="text" id="roomName" placeholder="test-room" value="salon-demo">
+        </div>
+        
+        <div class="input-group">
+            <label for="callerName">Your Name</label>
+            <input type="text" id="callerName" placeholder="John Doe" value="Customer">
+        </div>
+        
+        <div class="button-group">
+            <button id="callBtn" class="btn-call">📞 Call Salon</button>
+            <button id="hangupBtn" class="btn-hangup" disabled>🔴 Hang Up</button>
+        </div>
+        
+        <div class="audio-controls">
+            <label>
+                <input type="checkbox" id="micToggle" checked>
+                🎤 Microphone
+            </label>
+            <label>
+                <input type="checkbox" id="speakerToggle" checked>
+                🔊 Speaker
+            </label>
+        </div>
+        
+        <div class="transcript" id="transcript">
+            <div style="text-align: center; color: #999;">
+                Call transcript will appear here...
+            </div>
+        </div>
+        
+        <div class="info-box">
+            <strong>💡 Try asking:</strong>
+            <ul>
+                <li>"What are your hours?"</li>
+                <li>"How much is a haircut?"</li>
+                <li>"Do you do keratin treatments?" (will escalate)</li>
+                <li>"Can I book for Saturday at 2pm?" (will escalate)</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // LiveKit connection state
+        let room = null;
+        let audioTrack = null;
+        
+        const statusEl = document.getElementById('status');
+        const callBtn = document.getElementById('callBtn');
+        const hangupBtn = document.getElementById('hangupBtn');
+        const transcriptEl = document.getElementById('transcript');
+        const micToggle = document.getElementById('micToggle');
+        const speakerToggle = document.getElementById('speakerToggle');
+        
+        // Update status UI
+        function updateStatus(status, className) {
+            statusEl.textContent = status;
+            statusEl.className = `status ${className}`;
+        }
+        
+        // Add message to transcript
+        function addToTranscript(role, message) {
+            const item = document.createElement('div');
+            item.className = `transcript-item ${role}`;
+            item.innerHTML = `<strong>${role === 'user' ? 'You' : 'Agent'}:</strong>${message}`;
+            transcriptEl.appendChild(item);
+            transcriptEl.scrollTop = transcriptEl.scrollHeight;
+        }
+        
+        // Call button handler
+        callBtn.addEventListener('click', async () => {
+    try {
+        updateStatus('Connecting...', 'connecting');
+        callBtn.disabled = true;
+        
+        const roomName = document.getElementById('roomName').value || 'salon-demo';
+        const callerName = document.getElementById('callerName').value || 'Customer';
+        
+        const token = await getToken(roomName, callerName);
+        
+        room = new LivekitClient.Room({adaptiveStream: true, dynacast: true});
+        
+        // Setup event handlers BEFORE connecting
+        room.on('trackSubscribed', handleTrackSubscribed);
+        room.on('disconnected', handleDisconnected);
+        
+        // Connect to room
+        await room.connect(LIVEKIT_URL, token);
+        console.log('✅ Connected to room');
+        
+        // Create and publish microphone track
+        const localTrack = await LivekitClient.createLocalAudioTrack({
+            echoCancellation: true,
+            noiseSuppression: true,
+        });
+        await room.localParticipant.publishTrack(localTrack);
+        console.log('✅ Microphone published');
+        
+        updateStatus('Connected - Speaking with agent...', 'connected');
+        hangupBtn.disabled = false;
+        
+        addToTranscript('assistant', 'Hello! Thank you for calling Glamour Salon. This is Jamie. How can I help you today?');
+        
+    } catch (error) {
+        console.error('Connection error:', error);
+        updateStatus('Connection failed: ' + error.message, 'disconnected');
+        callBtn.disabled = false;
+    }
+});
+        // Hangup button handler
+        hangupBtn.addEventListener('click', () => {
+            if (room) {
+                room.disconnect();
+            }
+        });
+        
+        // Handle subscribed tracks (agent's voice)
+        function handleTrackSubscribed(track, publication, participant) {
+            console.log('📥 Track subscribed:', track.kind, 'from', participant.identity);
+            if (track.kind === 'audio') {
+                const audioElement = track.attach();
+                audioElement.autoplay = true;
+                audioElement.play().catch(e => console.error('Audio play failed:', e));
+                document.body.appendChild(audioElement);
+                addToTranscript('system', '🔊 Agent audio connected');
+            }
+        }
+        
+        // Handle disconnection
+        function handleDisconnected() {
+            updateStatus('Call ended', 'disconnected');
+            callBtn.disabled = false;
+            hangupBtn.disabled = true;
+            
+            if (room) {
+                room = null;
+            }
+        }
+        
+        // Microphone toggle
+        micToggle.addEventListener('change', async (e) => {
+            if (room) {
+                await room.localParticipant.setMicrophoneEnabled(e.target.checked);
+            }
+        });
+        
+        // Speaker toggle
+        speakerToggle.addEventListener('change', (e) => {
+            const audioElements = document.querySelectorAll('audio');
+            audioElements.forEach(audio => {
+                audio.muted = !e.target.checked;
+            });
+        });
+        
+        // Get LiveKit token from your backend
+        async function getToken(roomName, participantName) {
+            // TODO: Replace with your actual backend endpoint
+            // This endpoint should generate a LiveKit token
+            
+            // For development, you can use LiveKit CLI to generate tokens:
+            // livekit-cli token create --room salon-demo --identity customer
+            
+            const response = await fetch('http://localhost:8000/api/livekit/token', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ roomName, participantName })
+            });
+            
+            const data = await response.json();
+            return data.token;
+        }
+        
+        // TODO: Set your LiveKit server URL
+        const LIVEKIT_URL = 'wss://salonb-ze4r0pf0.livekit.cloud';
+        // You'll need to update this with your actual LiveKit URL from .env
+    </script>
+</body>
+</html>
